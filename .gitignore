@@ -1,0 +1,8 @@
+*.o
+*.bin
+*.as
+/.settings
+/arisc-fw
+.project
+.cproject
+
