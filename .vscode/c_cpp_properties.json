@@ -7,7 +7,7 @@
             ],
             "defines": [],
             "compilerPath": "/opt/toolchains/or1k-elf/bin/or1k-elf-gcc",
-            "cStandard": "gnu17",
+            "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "linux-gcc-x64"
         }
