@@ -86,9 +86,9 @@ void pwm_main_loop()
     // check/process channels data
     for ( c = d[PWM_CH_CNT]; c--; )
     {
-        // nothing to do?
+        // if PWM output is disabled
         if ( !p[c][PWM_CH_P_BUSY] ) continue;
-        // not a time to do an action?
+        // if not a time to do an action
         if ( (d[PWM_TIMER_TICK] - p[c][PWM_CH_TICK]) < p[c][PWM_CH_TIMEOUT] ) continue;
 
         if ( p[c][PWM_CH_D_BUSY] ) // current task is `direction change`
@@ -107,10 +107,14 @@ void pwm_main_loop()
         }
         else // current task is `pwm output`
         {
-            if ( GPIO_PIN_GET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]) ) // clear PWM pin
+            if ( GPIO_PIN_GET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]) ) // PWM pin is HIGH
             {
                 GPIO_PIN_CLR(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSKN]);
+                p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T0];
                 p[c][PWM_CH_POS] += p[c][PWM_CH_D] ? -1 : 1;
+            }
+            else // PWM pin is LOW
+            {
                 if ( p[c][PWM_CH_P_STOP] )
                 {
                     p[c][PWM_CH_P_STOP] = 0;
@@ -125,13 +129,9 @@ void pwm_main_loop()
                 }
                 else
                 {
-                    p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T0];
+                    GPIO_PIN_SET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]);
+                    p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T1];
                 }
-            }
-            else // set PWM pin
-            {
-                GPIO_PIN_SET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]);
-                p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T1];
             }
         }
 
