@@ -47,15 +47,15 @@ enum
 };
 
 #define PWM_SHM_BASE         (ARISC_SHM_BASE)
-#define PWM_SHM_CH_DATA_BASE (PWM_SHM_BASE + PWM_CH_MAX_CNT*4)
-#define PWM_SHM_DATA_BASE    (PWM_SHM_CH_DATA_BASE + PWM_CH_MAX_CNT*PWM_CH_DATA_CNT*4)
-#define PWM_SHM_SIZE         (PWM_SHM_DATA_BASE + PWM_DATA_CNT*4)
+#define PWM_SHM_DATA_BASE    (PWM_SHM_BASE)
+#define PWM_SHM_CH_DATA_BASE (PWM_SHM_DATA_BASE + PWM_DATA_CNT*4)
+#define PWM_SHM_SIZE         (PWM_SHM_CH_DATA_BASE + PWM_CH_MAX_CNT*PWM_CH_DATA_CNT*4)
 
 
 
 
-static volatile uint32_t (*p)[PWM_CH_DATA_CNT] = (void*)PWM_SHM_CH_DATA_BASE;
 static volatile uint32_t *d = (uint32_t*)PWM_SHM_DATA_BASE;
+static volatile uint32_t (*p)[PWM_CH_DATA_CNT] = (void*)PWM_SHM_CH_DATA_BASE;
 
 
 
