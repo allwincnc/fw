@@ -54,8 +54,8 @@ enum
 
 
 
-static volatile uint32_t *d = (uint32_t*)PWM_SHM_DATA_BASE;
-static volatile uint32_t (*p)[PWM_CH_DATA_CNT] = (void*)PWM_SHM_CH_DATA_BASE;
+static volatile uint32_t *pd = (uint32_t*)PWM_SHM_DATA_BASE;
+static volatile uint32_t (*pc)[PWM_CH_DATA_CNT] = (void*)PWM_SHM_CH_DATA_BASE;
 
 
 
@@ -77,65 +77,65 @@ void pwm_main_loop()
     volatile uint32_t c;
 
     // is access locked?
-    if ( d[PWM_ARM_LOCK] ) { d[PWM_ARISC_LOCK] = 0; return; }
-    else d[PWM_ARISC_LOCK] = 1;
+    if ( pd[PWM_ARM_LOCK] ) { pd[PWM_ARISC_LOCK] = 0; return; }
+    else pd[PWM_ARISC_LOCK] = 1;
 
     // get timer counter value
-    d[PWM_TIMER_TICK] = TIMER_CNT_GET();
+    pd[PWM_TIMER_TICK] = TIMER_CNT_GET();
 
     // check/process channels data
-    for ( c = d[PWM_CH_CNT]; c--; )
+    for ( c = pd[PWM_CH_CNT]; c--; )
     {
         // if PWM output is disabled
-        if ( !p[c][PWM_CH_P_BUSY] ) continue;
+        if ( !pc[c][PWM_CH_P_BUSY] ) continue;
         // if not a time to do an action
-        if ( (d[PWM_TIMER_TICK] - p[c][PWM_CH_TICK]) < p[c][PWM_CH_TIMEOUT] ) continue;
+        if ( (pd[PWM_TIMER_TICK] - pc[c][PWM_CH_TICK]) < pc[c][PWM_CH_TIMEOUT] ) continue;
 
-        if ( p[c][PWM_CH_D_BUSY] ) // current task is `direction change`
+        if ( pc[c][PWM_CH_D_BUSY] ) // current task is `direction change`
         {
-            p[c][PWM_CH_D_BUSY] = 0;
-            p[c][PWM_CH_D] = !p[c][PWM_CH_D];
-            p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_D_T1];
-            if ( GPIO_PIN_GET(p[c][PWM_CH_D_PORT], p[c][PWM_CH_D_PIN_MSK]) ) // clear DIR pin
+            pc[c][PWM_CH_D_BUSY] = 0;
+            pc[c][PWM_CH_D] = !pc[c][PWM_CH_D];
+            pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_D_T1];
+            if ( GPIO_PIN_GET(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSK]) ) // clear DIR pin
             {
-                GPIO_PIN_CLR(p[c][PWM_CH_D_PORT], p[c][PWM_CH_D_PIN_MSKN]);
+                GPIO_PIN_CLR(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSKN]);
             }
             else // set DIR pin
             {
-                GPIO_PIN_SET(p[c][PWM_CH_D_PORT], p[c][PWM_CH_D_PIN_MSK]);
+                GPIO_PIN_SET(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSK]);
             }
         }
         else // current task is `pwm output`
         {
-            if ( GPIO_PIN_GET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]) ) // PWM pin is HIGH
+            if ( GPIO_PIN_GET(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSK]) ) // PWM pin is HIGH
             {
-                GPIO_PIN_CLR(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSKN]);
-                p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T0];
-                p[c][PWM_CH_POS] += p[c][PWM_CH_D] ? -1 : 1;
+                GPIO_PIN_CLR(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSKN]);
+                pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T0];
+                pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
             }
             else // PWM pin is LOW
             {
-                if ( p[c][PWM_CH_P_STOP] )
+                if ( pc[c][PWM_CH_P_STOP] )
                 {
-                    p[c][PWM_CH_P_STOP] = 0;
-                    p[c][PWM_CH_P_BUSY] = 0;
+                    pc[c][PWM_CH_P_STOP] = 0;
+                    pc[c][PWM_CH_P_BUSY] = 0;
                     continue;
                 }
-                if ( p[c][PWM_CH_D_CHANGE] )
+                if ( pc[c][PWM_CH_D_CHANGE] )
                 {
-                    p[c][PWM_CH_D_CHANGE] = 0;
-                    p[c][PWM_CH_D_BUSY] = 1;
-                    p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_D_T0];
+                    pc[c][PWM_CH_D_CHANGE] = 0;
+                    pc[c][PWM_CH_D_BUSY] = 1;
+                    pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_D_T0];
                 }
                 else
                 {
-                    GPIO_PIN_SET(p[c][PWM_CH_P_PORT], p[c][PWM_CH_P_PIN_MSK]);
-                    p[c][PWM_CH_TIMEOUT] = p[c][PWM_CH_P_T1];
+                    GPIO_PIN_SET(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSK]);
+                    pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T1];
                 }
             }
         }
 
-        p[c][PWM_CH_TICK] = d[PWM_TIMER_TICK];
+        pc[c][PWM_CH_TICK] = pd[PWM_TIMER_TICK];
     }
 }
 
