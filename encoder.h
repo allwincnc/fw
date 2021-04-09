@@ -100,6 +100,8 @@ void enc_main_loop()
         // if channel is disabled
         if ( !ec[c][ENC_CH_BUSY] ) continue;
 
+        // TODO - speedup calculations
+
         if ( ec[c][ENC_CH_Z_USE] ) // if we are using ABZ encoder
         {
             Z = GPIO_PIN_GET(ec[c][ENC_CH_Z_PORT], ec[c][ENC_CH_Z_PIN_MSK]);
@@ -108,6 +110,7 @@ void enc_main_loop()
             {
                 if ( Z ) ec[c][ENC_CH_POS] = 0;
                 ec[c][ENC_CH_Z_STATE] = Z;
+                ec[c][ENC_CH_Z_USE] = 0;
             }
         }
 
