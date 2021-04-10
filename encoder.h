@@ -88,7 +88,10 @@ void enc_init()
 static inline
 void enc_main_loop()
 {
-    volatile uint32_t c, A, B, Z, AB;
+    volatile static uint32_t c, A, B, Z, AB;
+
+    // nothing to do? quit
+    if ( !ed[ENC_CH_CNT] ) return;
 
     // is access locked?
     if ( ed[ENC_ARM_LOCK] ) { ed[ENC_ARISC_LOCK] = 0; return; }

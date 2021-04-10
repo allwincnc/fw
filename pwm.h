@@ -74,7 +74,10 @@ void pwm_init()
 static inline
 void pwm_main_loop()
 {
-    volatile uint32_t c;
+    volatile static uint32_t c;
+
+    // nothing to do? quit
+    if ( !pd[PWM_CH_CNT] ) return;
 
     // is access locked?
     if ( pd[PWM_ARM_LOCK] ) { pd[PWM_ARISC_LOCK] = 0; return; }
