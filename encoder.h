@@ -26,7 +26,6 @@ enum
     ENC_CH_B_USE,
     ENC_CH_B_PORT,
     ENC_CH_B_PIN_MSK,
-    ENC_CH_B_INV,
     ENC_CH_B_STATE,
 
     ENC_CH_Z_USE,
