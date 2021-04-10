@@ -19,16 +19,21 @@ enum
 
     ENC_CH_A_PORT,
     ENC_CH_A_PIN_MSK,
+    ENC_CH_A_INV,
+    ENC_CH_A_ALL,
     ENC_CH_A_STATE,
 
     ENC_CH_B_USE,
     ENC_CH_B_PORT,
     ENC_CH_B_PIN_MSK,
+    ENC_CH_B_INV,
     ENC_CH_B_STATE,
 
     ENC_CH_Z_USE,
     ENC_CH_Z_PORT,
     ENC_CH_Z_PIN_MSK,
+    ENC_CH_Z_INV,
+    ENC_CH_Z_ALL,
     ENC_CH_Z_STATE,
 
     ENC_CH_DATA_CNT
@@ -103,41 +108,38 @@ void enc_main_loop()
         // if channel is disabled
         if ( !ec[c][ENC_CH_BUSY] ) continue;
 
-        // TODO - speedup calculations
-
-        if ( ec[c][ENC_CH_Z_USE] ) // if we are using ABZ encoder
-        {
+        // index (Z) searching is active
+        if ( ec[c][ENC_CH_Z_USE] ) {
             Z = GPIO_PIN_GET(ec[c][ENC_CH_Z_PORT], ec[c][ENC_CH_Z_PIN_MSK]);
-
-            if ( ec[c][ENC_CH_Z_STATE] != Z ) // on phase Z state change
-            {
-                if ( Z ) ec[c][ENC_CH_POS] = 0;
+            if ( ec[c][ENC_CH_Z_STATE] != Z ) {
                 ec[c][ENC_CH_Z_STATE] = Z;
-                ec[c][ENC_CH_Z_USE] = 0;
+                if ( ec[c][ENC_CH_Z_ALL] ||
+                     (Z && !ec[c][ENC_CH_Z_INV]) ||
+                     (!Z && ec[c][ENC_CH_Z_INV])
+                ) {
+                    ec[c][ENC_CH_Z_USE] = 0;
+                    ec[c][ENC_CH_POS] = 0;
+                }
             }
         }
 
         A = GPIO_PIN_GET(ec[c][ENC_CH_A_PORT], ec[c][ENC_CH_A_PIN_MSK]);
 
-        if ( ec[c][ENC_CH_B_USE] ) // if we are using AB encoder
-        {
+        // we are using two phazes (AB) encoder
+        if ( ec[c][ENC_CH_B_USE] ) {
             B = GPIO_PIN_GET(ec[c][ENC_CH_B_PORT], ec[c][ENC_CH_B_PIN_MSK]);
-
-            if ( ec[c][ENC_CH_A_STATE] != A || ec[c][ENC_CH_B_STATE] != B ) // on any phase change
-            {
+            if ( ec[c][ENC_CH_A_STATE] != A || ec[c][ENC_CH_B_STATE] != B ) {
                 AB = (A ? 0b10 : 0) | (B ? 0b01 : 0); // get encoder state
-
-                if ( es[ ec[c][ENC_CH_AB_STATE] ] == AB ) ec[c][ENC_CH_POS]++; // CW
-                else                                      ec[c][ENC_CH_POS]--; // CCW
-
+                ec[c][ENC_CH_POS] += es[ ec[c][ENC_CH_AB_STATE] ] == AB ? 1 : -1;
                 ec[c][ENC_CH_AB_STATE] = AB;
             }
-
             ec[c][ENC_CH_B_STATE] = B;
         }
-        else if ( ec[c][ENC_CH_A_STATE] != A && A ) // if we are using A encoder and phase A is HIGH
-        {
-            ec[c][ENC_CH_POS]++; // CW
+        // we are using single phaze encoder AND it's state was changed
+        else if ( ec[c][ENC_CH_A_STATE] != A ) {
+            if ( ec[c][ENC_CH_Z_ALL] ||
+                 (A && !ec[c][ENC_CH_A_INV]) ||
+                 (!A && ec[c][ENC_CH_A_INV]) ) ec[c][ENC_CH_POS]++;
         }
 
         ec[c][ENC_CH_A_STATE] = A;
