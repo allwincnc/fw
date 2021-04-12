@@ -122,6 +122,11 @@ void pwm_main_loop()
                 {
                     pc[c][PWM_CH_P_STOP] = 0;
                     pc[c][PWM_CH_P_BUSY] = 0;
+                    if ( (c+1) == pd[PWM_CH_CNT] ) { // channels_count--
+                        for ( ; c-- && !pc[c][PWM_CH_P_BUSY]; );
+                        if ( c >= PWM_CH_MAX_CNT ) { pd[PWM_CH_CNT] = 0; return; }
+                        pd[PWM_CH_CNT] = c+1;
+                    }
                     continue;
                 }
                 if ( pc[c][PWM_CH_D_CHANGE] )
