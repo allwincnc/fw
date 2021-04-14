@@ -114,9 +114,8 @@ void pwm_main_loop()
                 GPIO_PIN_CLR(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSKN]);
                 pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T0];
                 pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
-                if ( pc[c][PWM_CH_POS] == pc[c][PWM_CH_POS_CMD] ) pc[c][PWM_CH_P_STOP] = 1;
             } else { // PWM pin is LOW
-                if ( pc[c][PWM_CH_P_STOP] ) {
+                if ( pc[c][PWM_CH_P_STOP] || pc[c][PWM_CH_POS] == pc[c][PWM_CH_POS_CMD] ) {
                     pc[c][PWM_CH_P_STOP] = 0;
                     pc[c][PWM_CH_P_BUSY] = 0;
                     if ( (c+1) == pd[PWM_CH_CNT] ) { // channels_count--
