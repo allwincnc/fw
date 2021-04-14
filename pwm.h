@@ -14,6 +14,7 @@
 enum
 {
     PWM_CH_POS,
+    PWM_CH_POS_CMD,
     PWM_CH_TICK,
     PWM_CH_TIMEOUT,
 
@@ -21,6 +22,7 @@ enum
     PWM_CH_P_PORT,
     PWM_CH_P_PIN_MSK,
     PWM_CH_P_PIN_MSKN,
+    PWM_CH_P_STATE,
     PWM_CH_P_T0,
     PWM_CH_P_T1,
     PWM_CH_P_STOP,
@@ -29,6 +31,7 @@ enum
     PWM_CH_D_PORT,
     PWM_CH_D_PIN_MSK,
     PWM_CH_D_PIN_MSKN,
+    PWM_CH_D_STATE,
     PWM_CH_D_T0,
     PWM_CH_D_T1,
     PWM_CH_D,
@@ -94,32 +97,26 @@ void pwm_main_loop()
         // if not a time to do an action
         if ( (pd[PWM_TIMER_TICK] - pc[c][PWM_CH_TICK]) < pc[c][PWM_CH_TIMEOUT] ) continue;
 
-        if ( pc[c][PWM_CH_D_BUSY] ) // current task is `direction change`
-        {
+        if ( pc[c][PWM_CH_D_BUSY] ) { // current task is `direction change`
             pc[c][PWM_CH_D_BUSY] = 0;
             pc[c][PWM_CH_D] = !pc[c][PWM_CH_D];
             pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_D_T1];
-            if ( GPIO_PIN_GET(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSK]) ) // clear DIR pin
-            {
+            if ( pc[c][PWM_CH_D_STATE] ) { // DIR pin is HIGH
+                pc[c][PWM_CH_D_STATE] = 0;
                 GPIO_PIN_CLR(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSKN]);
-            }
-            else // set DIR pin
-            {
+            } else { // DIR pin is LOW
+                pc[c][PWM_CH_D_STATE] = 1;
                 GPIO_PIN_SET(pc[c][PWM_CH_D_PORT], pc[c][PWM_CH_D_PIN_MSK]);
             }
-        }
-        else // current task is `pwm output`
-        {
-            if ( GPIO_PIN_GET(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSK]) ) // PWM pin is HIGH
-            {
+        } else { // current task is `pwm output`
+            if ( pc[c][PWM_CH_P_STATE] ) { // PWM pin is HIGH
+                pc[c][PWM_CH_P_STATE] = 0;
                 GPIO_PIN_CLR(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSKN]);
                 pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T0];
                 pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
-            }
-            else // PWM pin is LOW
-            {
-                if ( pc[c][PWM_CH_P_STOP] )
-                {
+                if ( pc[c][PWM_CH_POS] == pc[c][PWM_CH_POS_CMD] ) pc[c][PWM_CH_P_STOP] = 1;
+            } else { // PWM pin is LOW
+                if ( pc[c][PWM_CH_P_STOP] ) {
                     pc[c][PWM_CH_P_STOP] = 0;
                     pc[c][PWM_CH_P_BUSY] = 0;
                     if ( (c+1) == pd[PWM_CH_CNT] ) { // channels_count--
@@ -129,14 +126,12 @@ void pwm_main_loop()
                     }
                     continue;
                 }
-                if ( pc[c][PWM_CH_D_CHANGE] )
-                {
+                if ( pc[c][PWM_CH_D_CHANGE] ) {
                     pc[c][PWM_CH_D_CHANGE] = 0;
                     pc[c][PWM_CH_D_BUSY] = 1;
                     pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_D_T0];
-                }
-                else
-                {
+                } else {
+                    pc[c][PWM_CH_P_STATE] = 1;
                     GPIO_PIN_SET(pc[c][PWM_CH_P_PORT], pc[c][PWM_CH_P_PIN_MSK]);
                     pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T1];
                 }
