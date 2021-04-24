@@ -17,6 +17,7 @@ enum
     PWM_CH_TICK,
     PWM_CH_TIMEOUT,
     PWM_CH_STATE,
+    PWM_CH_WATCHDOG,
 
     PWM_CH_P_PORT,
     PWM_CH_P_PIN_MSK,
@@ -128,6 +129,14 @@ void pwm_main_loop()
                     pc[c][PWM_CH_STATE] = PWM_CH_STATE_P1;
                     pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T1];
                     pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
+                    if ( pc[c][PWM_CH_WATCHDOG] ) {
+                        WATCHDOG:
+                        pc[c][PWM_CH_WATCHDOG]--;
+                        if ( !pc[c][PWM_CH_WATCHDOG] ) {
+                            pc[c][PWM_CH_STATE] = PWM_CH_STATE_IDLE;
+                            pc[c][PWM_CH_TIMEOUT] = 0;
+                        }
+                    }
                 }
                 break;
             }
@@ -137,6 +146,7 @@ void pwm_main_loop()
                 if ( pc[c][PWM_CH_D_CHANGE] ) goto D_CHANGE;
                 pc[c][PWM_CH_STATE] = PWM_CH_STATE_P0;
                 pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T0];
+                if ( pc[c][PWM_CH_WATCHDOG] ) goto WATCHDOG;
                 break;
             }
             case PWM_CH_STATE_D0: {
