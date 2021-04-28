@@ -26,6 +26,7 @@ enum
     PWM_CH_P_T0,
     PWM_CH_P_T1,
     PWM_CH_P_STOP,
+    PWM_CH_P_TICK,
 
     PWM_CH_D_PORT,
     PWM_CH_D_PIN_MSK,
@@ -123,10 +124,14 @@ void on_pwm_ch_watchdog(uint32_t c)
 static inline
 void on_pwm_ch_p0(uint32_t c)
 {
+    if ( pc[c][PWM_CH_P_STOP] ) { on_pwm_ch_p_stop(c); return; }
+    if ( pc[c][PWM_CH_D_CHANGE] ) { on_pwm_ch_d_change(c); return; }
     PWM_P_PIN_SET();
     pc[c][PWM_CH_STATE] = PWM_CH_STATE_P1;
     pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T1];
+    pc[c][PWM_CH_P_TICK] = pd[PWM_TIMER_TICK];
     pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
+    if ( pc[c][PWM_CH_WATCHDOG] ) on_pwm_ch_watchdog(c);
 }
 
 static inline
@@ -174,7 +179,10 @@ void pwm_main_loop()
             case PWM_CH_STATE_P1: { on_pwm_ch_p1(c); break; }
             case PWM_CH_STATE_D0: { on_pwm_ch_d0(c); break; }
             case PWM_CH_STATE_D1: { on_pwm_ch_d1(c); break; }
-            default: pc[c][PWM_CH_STATE] = PWM_CH_STATE_IDLE;
+            default: {
+                pc[c][PWM_CH_STATE] = PWM_CH_STATE_IDLE;
+                pc[c][PWM_CH_TIMEOUT] = 0;
+            }
         }
         pc[c][PWM_CH_TICK] = pd[PWM_TIMER_TICK];
     }
