@@ -131,7 +131,6 @@ void on_pwm_ch_p0(uint32_t c)
     pc[c][PWM_CH_TIMEOUT] = pc[c][PWM_CH_P_T1];
     pc[c][PWM_CH_P_TICK] = pd[PWM_TIMER_TICK];
     pc[c][PWM_CH_POS] += pc[c][PWM_CH_D] ? -1 : 1;
-    if ( pc[c][PWM_CH_WATCHDOG] ) on_pwm_ch_watchdog(c);
 }
 
 static inline
