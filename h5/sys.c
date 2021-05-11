@@ -35,6 +35,7 @@ void clk_set_rate(uint32_t rate)
 
     if ( rate <= 24000000 ) return;
 
+#if 0
     // if rate <= 432 MHz, the VDD_CPUS/VDD_RTC can be set to 1.1V
     // if rate > 432 MHz, the VDD_CPUS/VDD_RTC must be set to 1.2-1.3V
     if ( rate > 432000000 )
@@ -69,12 +70,14 @@ void clk_set_rate(uint32_t rate)
     else if (rate == 540000000) { N = 29; K = 2; M = 1; P = 0; }
     else if (rate == 558000000) { N = 30; K = 2; M = 1; P = 0; }
     else if (rate == 576000000) { N = 31; K = 2; M = 1; P = 0; }
-
+#endif
     reg = readl(PLL6_CTRL_REG);
+#if 0
     SET_BITS_AT(reg, 2, 0, M);
     SET_BITS_AT(reg, 2, 4, K);
     SET_BITS_AT(reg, 5, 8, N);
     SET_BITS_AT(reg, 2, 16, P);
+#endif
     reg |= PLL6_CTRL_ENABLE | PLL6_CTRL_CLK_OUTEN;
     writel(reg, PLL6_CTRL_REG);
 
