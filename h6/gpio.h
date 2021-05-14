@@ -7,13 +7,13 @@
 
 
 
-#define GPIO_BASE               0x01c20800
-#define GPIO_R_BASE             0x01f02c00
+#define GPIO_BASE               0x0300B000
+#define GPIO_R_BASE             0x07022000
 #define GPIO_BANK_SIZE          0x24
-#define GPIO_PORTS_MAX_CNT      8
+#define GPIO_PORTS_MAX_CNT      10
 #define GPIO_PINS_MAX_CNT       24
 
-enum { PA, PB, PC, PD, PE, PF, PG, PL };
+enum { PA, PB, PC, PD, PE, PF, PG, PH, PL, PM };
 enum { LOW, HIGH };
 
 #define GPIO_PIN_SET(PORT,PIN_MASK) \
@@ -37,7 +37,9 @@ volatile uint32_t *gpio[GPIO_PORTS_MAX_CNT] =
     (uint32_t *) ( (GPIO_BASE + PE * GPIO_BANK_SIZE) + 16 ),
     (uint32_t *) ( (GPIO_BASE + PF * GPIO_BANK_SIZE) + 16 ),
     (uint32_t *) ( (GPIO_BASE + PG * GPIO_BANK_SIZE) + 16 ),
-    (uint32_t *) ( (GPIO_R_BASE                    ) + 16 )
+    (uint32_t *) ( (GPIO_BASE + PH * GPIO_BANK_SIZE) + 16 ),
+    (uint32_t *) ( (GPIO_R_BASE                    ) + 16 ),
+    (uint32_t *) ( (GPIO_R_BASE +    GPIO_BANK_SIZE) + 16 )
 };
 
 
