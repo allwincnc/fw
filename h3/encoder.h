@@ -105,14 +105,7 @@ void enc_main_loop()
     for ( c = ed[ENC_CH_CNT]; c--; )
     {
         // if channel is disabled
-        if ( !ec[c][ENC_CH_BUSY] ) {
-            if ( (c+1) == ed[ENC_CH_CNT] ) { // channels_count--
-                for ( ; c-- && !ec[c][ENC_CH_BUSY]; );
-                if ( c >= ENC_CH_MAX_CNT ) { ed[ENC_CH_CNT] = 0; return; }
-                ed[ENC_CH_CNT] = c+1;
-            }
-            continue;
-        }
+        if ( !ec[c][ENC_CH_BUSY] ) continue;
 
         // index (Z) searching is active
         if ( ec[c][ENC_CH_Z_USE] ) {
