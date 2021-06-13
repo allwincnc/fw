@@ -35,6 +35,9 @@ enum
     ENC_CH_Z_ALL,
     ENC_CH_Z_STATE,
 
+    ENC_CH_PER_TICKS,
+    ENC_CH_LAST_TICK,
+
     ENC_CH_DATA_CNT
 };
 
@@ -92,7 +95,7 @@ void enc_init()
 static inline
 void enc_main_loop()
 {
-    volatile static uint32_t c, A, B, Z, AB;
+    volatile static uint32_t c, A, B, Z, AB, tick;
 
     // nothing to do? quit
     if ( !ed[ENC_CH_CNT] ) return;
@@ -100,6 +103,8 @@ void enc_main_loop()
     // is access locked?
     if ( ed[ENC_ARM_LOCK] ) { ed[ENC_ARISC_LOCK] = 0; return; }
     else ed[ENC_ARISC_LOCK] = 1;
+
+    tick = TIMER_CNT_GET();
 
     // check/process channels data
     for ( c = ed[ENC_CH_CNT]; c--; )
@@ -131,14 +136,28 @@ void enc_main_loop()
                 AB = (A ? 0b10 : 0) | (B ? 0b01 : 0); // get encoder state
                 ec[c][ENC_CH_POS] += es[ ec[c][ENC_CH_AB_STATE] ] == AB ? 1 : -1;
                 ec[c][ENC_CH_AB_STATE] = AB;
+                if (tick > ec[c][ENC_CH_LAST_TICK]) { // check for timer overflow
+		    ec[c][ENC_CH_PER_TICKS] = tick - ec[c][ENC_CH_LAST_TICK];
+		} else {
+		    ec[c][ENC_CH_PER_TICKS] = 0xFFFFFFFF - (ec[c][ENC_CH_LAST_TICK] - tick);
+		}
+		ec[c][ENC_CH_LAST_TICK] = tick;
             }
             ec[c][ENC_CH_B_STATE] = B;
         }
         // we are using single phaze encoder AND it's state was changed
         else if ( ec[c][ENC_CH_A_STATE] != A ) {
-            if ( ec[c][ENC_CH_Z_ALL] ||
+            if ( ec[c][ENC_CH_A_ALL] ||
                  (A && !ec[c][ENC_CH_A_INV]) ||
-                 (!A && ec[c][ENC_CH_A_INV]) ) ec[c][ENC_CH_POS]++;
+                 (!A && ec[c][ENC_CH_A_INV]) ) {
+                    ec[c][ENC_CH_POS]++;
+                    if (tick > ec[c][ENC_CH_LAST_TICK]) { // check for timer overflow
+		        ec[c][ENC_CH_PER_TICKS] = tick - ec[c][ENC_CH_LAST_TICK];
+		    } else {
+		        ec[c][ENC_CH_PER_TICKS] = 0xFFFFFFFF - (ec[c][ENC_CH_LAST_TICK] - tick);
+		    }
+		    ec[c][ENC_CH_LAST_TICK] = tick;
+	    }
         }
 
         ec[c][ENC_CH_A_STATE] = A;
